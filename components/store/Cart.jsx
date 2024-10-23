@@ -73,7 +73,7 @@ const Cart = ({ open, setOpen }) => {
               <div className="flex items-center pr-3 ml-auto">
                 <RiDeleteBin6Line
                   size={20}
-                  onClick={() => removeItemFromCart(products, i, dispatch)}
+                  onClick={() => removeItemFromCart(item, i, dispatch)}
                 />
               </div>
             </div>

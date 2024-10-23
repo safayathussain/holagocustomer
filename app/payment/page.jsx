@@ -15,13 +15,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FetchApi } from "@/utils/FetchApi";
 import { getDeliveryCharge, getDeliveryDays, useCart } from "@/utils/functions";
 import { ImgUrl } from "@/constants/urls";
+import toast from "react-hot-toast";
 
 const Page = () => {
   const [open, setopen] = useState(false);
   const [addressData, setAddressData] = useState({});
   const address = useSearchParams().get("address");
-  const router = useRouter()
-  const { products } = useCart();
+  const router = useRouter();
+  const { products, refetchCart } = useCart();
+  const isPaymentSuccess = useSearchParams().get("isPaymentSuccess");
+  const [toastShown, setToastShown] = useState(false); // State to prevent multiple toasts
+
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] =
     useState("digitalPayment");
   useEffect(() => {
@@ -38,7 +42,7 @@ const Page = () => {
   }, 0);
   const deliveryCharge = getDeliveryCharge(addressData?.city);
   const totalPrice = subtotalSalePrice + deliveryCharge;
-  const handleOrder =async () => {
+  const handleOrder = async () => {
     const body = {
       shipping_address_id: Number(address),
       payment_method: selectedDeliveryMethod,
@@ -52,15 +56,49 @@ const Page = () => {
         };
       }),
     };
-    await FetchApi({url: `order/api/create-order/`, body: body, method: 'post', isToast: true})
+    const { data } = await FetchApi({
+      url: `order/api/create-order/`,
+      body: body,
+      method: "post",
+      isToast: true,
+      callback: async () => {
+        // router.push("/store");
+        refetchCart();
+      },
+    });
+    const orderId = data?.order_details?.order_id;
+    if (orderId) {
+      const { data: payment_res } = await FetchApi({
+        url: `order/api/initiate-payment/${orderId}/`,
+        method: "post",
+      });
+      router.push(payment_res?.payment_url);
+    }
   };
+  useEffect(() => {
+    if (!toastShown) {
+      if (isPaymentSuccess === "true") {
+        toast.success("Payment successful");
+        setToastShown(true); 
+        const url = new URL(window.location);
+        url.searchParams.delete("isPaymentSuccess");
+        window.history.replaceState(null, "", url.toString());
+      } else if (isPaymentSuccess === "false") {
+        toast.error("Payment failed");
+        setToastShown(true); 
+        const url = new URL(window.location);
+        url.searchParams.delete("isPaymentSuccess");
+        window.history.replaceState(null, "", url.toString());
+      }
+    }
+  }, [isPaymentSuccess, toastShown]);
   return (
     <div className="min-h-screen">
       <NavigationBar cartOpen={setopen} />
       <Cart setOpen={setopen} open={open} />
       <div className="pt-36 container flex flex-col lg:flex-row items-center gap-7 h-full">
         <div className="w-full lg:w-1/2">
-          <IoArrowBack size={30} onClick={() =>router.back()}/>
+          <IoArrowBack size={30} onClick={() => router.back()} />
           <p className="text-xl my-2 text-black font-medium">
             Shipping Services
           </p>
@@ -109,9 +147,10 @@ const Page = () => {
                 <div className="flex justify-between p-3 items-center">
                   <CheckBoxInput
                     label={"Cash on delivery"}
-                    checked={selectedDeliveryMethod === "cod"}
+                    checked={selectedDeliveryMethod === "cash_on_delivery"}
                     onChange={(e) =>
-                      e.target.checked && setSelectedDeliveryMethod("cod")
+                      e.target.checked &&
+                      setSelectedDeliveryMethod("cash_on_delivery")
                     }
                   />
                   <Image src={cod} alt=""></Image>
@@ -119,7 +158,9 @@ const Page = () => {
               )}
             </div>
             <Button className={"w-full !rounded-full"} onClick={handleOrder}>
-              {selectedDeliveryMethod === "cod" ? "Order now" : "Pay now"}
+              {selectedDeliveryMethod === "cash_on_delivery"
+                ? "Order now"
+                : "Pay now"}
             </Button>
           </div>
         </div>
@@ -130,10 +171,10 @@ const Page = () => {
               key={i}
               className="flex mt-5 gap-3 border items-center border-[#EEEEEE] rounded-xl bg-white"
             >
-              <div className="">
+              <div className="w-2/5  ">
                 <img
                   src={ImgUrl + item?.product?.images[0]?.image}
-                  className="rounded-s-xl max-w-[167px] max-h-[150px]  object-cover"
+                  className="rounded-s-xl object-cover"
                   alt=""
                 ></img>
               </div>

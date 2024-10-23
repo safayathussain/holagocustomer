@@ -15,9 +15,8 @@ import { useParams } from "next/navigation";
 import { ImgUrl } from "@/constants/urls";
 import ProductColor from "@/components/store/product/ProductColor";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart, setCart } from "@/redux/slices/CartSlice";
 import { useAuth, useCart } from "@/utils/functions";
-import { jwtDecode } from "jwt-decode";
+import toast from "react-hot-toast";
 const Page = () => {
   const pagination = {
     clickable: true,
@@ -42,21 +41,13 @@ const Page = () => {
       });
 
       setproduct(data.data);
-      const test = {
-        id: 1,
-        size: "M",
-        quantity: 2323,
-        barCode: "2343222133",
-        available: true,
-        product: 1,
-      };
-      setSelectedSize(test)
-      // setSelectedSize(data.data.inventory[0]);
-      setSelectedColor(data.data.color.split(",")[0]);
+      setSelectedSize(data.data.inventory[0]);
+      setSelectedColor(data.data.color_list?.[0]);
     };
     loadData();
   }, []);
   const handleAddToCart = async () => {
+    if(!auth?.customer?.id) return toast.error("You need to login for add to cart.")
     const productToAdd = {
       product_id: product?.id,
       quantity: qty,

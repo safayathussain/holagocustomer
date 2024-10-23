@@ -1,11 +1,11 @@
 "use client";
 import Image from "next/image";
-import pci from "@/public/images/cuban-cat.png";
 import rarrow from "@/public/images/rarrow.png";
 import { useRef } from "react";
 import Link from "next/link";
+import { ImgUrl } from "@/constants/urls";
 
-export default function LatestProducts() {
+export default function LatestProducts({ products }) {
   const sliderRef = useRef(null);
 
   const slideLeft = () => {
@@ -32,28 +32,35 @@ export default function LatestProducts() {
             ref={sliderRef}
             className="md:flex grid grid-cols-2 gap-3 my-5  md:overflow-x-scroll hidden_scrollbar"
           >
-            {[...Array(15)].map((_, index) => (
-              <div
+            {products.map((item, index) => (
+              <Link
+                href={`/store/product/${item?.id}`}
                 key={index}
                 className=""
               >
                 <div className="">
-                  <Image
-                    className="border rounded-md md:min-w-[200px] xl:min-w-[300px]"
-                    src={pci}
+                  <img
+                    className="border rounded-md md:w-[200px] xl:w-[300px]"
+                    src={ImgUrl + item?.images?.[0]?.image}
                     alt="earphone"
                   />
                 </div>
                 <div className="secondary-color py-3">
-                  <h3 className="">Men’s Polo Shirt (PR0003)</h3>
-                  <p>৳ 1,400</p>
+                  <h3 className="">{item?.productName}</h3>
+                  <div className="flex gap-2">
+                    <p>৳ {item?.salePrice}</p>
+                    <p className="line-through text-gray-400">
+                      ৳ {item?.regularPrice}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
           <div className="flex md:hidden justify-center">
-
-            <Link href="" className="font-semibold underline">View All Products</Link>
+            <Link href="/store/products?products=" className="font-semibold underline">
+              View All Products
+            </Link>
           </div>
           <div className="md:absolute top-5 right-0 hidden ">
             <div className="flex flex-col justify-end">

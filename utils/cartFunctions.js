@@ -2,7 +2,7 @@ import { store } from "@/redux/store";
 import { FetchApi } from "./FetchApi";
 import { refetchCartState } from "./functions";
 
-const { setCart, setCartProducts } = require("@/redux/slices/CartSlice");
+const { setCart } = require("@/redux/slices/CartSlice");
 
 export const increaseQtyInCart = async (item, qty) => {
   const auth = store.getState((state) => state).auth.user;
@@ -42,9 +42,14 @@ export const decreaseQtyInCart = async (item, qty) => {
   }
   refetchCartState(auth);
 };
-export const removeItemFromCart = (cart, index, dispatch) => {
-  const updatedCart = [...cart];
-  updatedCart.splice(index, 1);
-  dispatch(setCartProducts(updatedCart));
-  return updatedCart;
+export const removeItemFromCart = async (item, index, dispatch) => {
+  const auth = store.getState((state) => state).auth.user;
+  await FetchApi({
+    url: `cart/api/cart_manage/${auth?.customer?.id}/delete/${item?.id}/`,
+    method: "delete",
+  });
+
+  refetchCartState(auth);
+
+  return;
 };

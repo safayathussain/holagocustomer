@@ -27,9 +27,7 @@ export const refetchCartState = async (auth) => {
   try {
     const { data } = await FetchApi({
       url: `/cart/api/get_all_carts/${auth?.customer?.id}/`,
-      callback: () => {},
     });
-    console.log(data);
     if (data.code === 200) {
       store.dispatch(setCart(data?.data));
     }
@@ -86,6 +84,7 @@ export const logoutUser = () => {
 };
 
 export function getCountryCode(phoneNumber) {
+  if(!phoneNumber) return "Country code not found"
   if (!phoneNumber?.startsWith("+")) {
     return "";
   }
@@ -126,3 +125,40 @@ export const useScreenWidth = () => {
 
   return screenWidth;
 };
+
+export const getOrderStatusStyle = (status) => {
+  return {
+    backgroundColor:
+      status === "pending"
+        ? "#FFD580"  // Muted orange for Pending
+        : status === "processing"
+        ? "#87CEEB"  // Light sky blue for Processing
+        : status === "shipped"
+        ? "#ADD8E6"  // Soft blue for Shipped
+        : status === "delivered"
+        ? "#90EE90"  // Light green for Delivered
+        : status === "canceled"
+        ? "#FFA07A"  // Soft red/orange for Canceled
+        : "#C0C0C0", // Light grey for unknown status
+  };
+};
+
+export function formatTo12Hour(timestamp) {
+  const date = new Date(timestamp);
+  
+  // Extract hours and minutes
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+  
+  // Determine AM or PM suffix
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  
+  // Convert to 12-hour format
+  hours = hours % 12 || 12; // Convert 0 to 12 for midnight
+  
+  // Format minutes to always show two digits
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+  // Format the date and time
+  return `${hours}:${formattedMinutes} ${ampm}, ${date.toLocaleDateString()}`;
+}

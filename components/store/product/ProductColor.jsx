@@ -7,7 +7,7 @@ const ProductColor = ({ product, selectedColor, setSelectedColor }) => {
       <div>
         <p className="text-sm mt-2">Select Color:</p>
         <div className="flex gap-2 ">
-          {product?.color?.split(',').map((item) => (
+          {product?.color_list?.map((item) => (
             <div key={item}>
               <button
                 onClick={() => setSelectedColor(item)}
