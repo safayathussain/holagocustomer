@@ -25,7 +25,8 @@ const Page = () => {
   const { products, refetchCart } = useCart();
   const isPaymentSuccess = useSearchParams().get("isPaymentSuccess");
   const [toastShown, setToastShown] = useState(false); // State to prevent multiple toasts
-
+  const [discountAmount, setdiscountAmount] = useState(0);
+  const [coupon, setcoupon] = useState("");
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] =
     useState("digitalPayment");
   useEffect(() => {
@@ -38,13 +39,21 @@ const Page = () => {
     loadData();
   }, []);
   const subtotalSalePrice = products?.reduce((subtotal, product) => {
-    return subtotal + parseFloat(product.total_price);
+    return (
+      subtotal +
+      parseFloat(
+        discountAmount
+          ? product?.product?.regularPrice * product?.quantity
+          : product?.product?.salePrice * product?.quantity
+      )
+    );
   }, 0);
   const deliveryCharge = getDeliveryCharge(addressData?.city);
   const totalPrice = subtotalSalePrice + deliveryCharge;
   const handleOrder = async () => {
     const body = {
       shipping_address_id: Number(address),
+      coupon_code: coupon,
       payment_method: selectedDeliveryMethod,
       shipping_cost: deliveryCharge,
       items: products.map((item) => {
@@ -62,36 +71,52 @@ const Page = () => {
       method: "post",
       isToast: true,
       callback: async () => {
-        // router.push("/store");
         refetchCart();
       },
     });
     const orderId = data?.order_details?.order_id;
-    if (orderId) {
+    if (orderId && selectedDeliveryMethod === "digitalPayment") {
       const { data: payment_res } = await FetchApi({
         url: `order/api/initiate-payment/${orderId}/`,
         method: "post",
       });
       router.push(payment_res?.payment_url);
+    }else{
+
+      router.push("/profile?screen=2");
     }
   };
   useEffect(() => {
     if (!toastShown) {
       if (isPaymentSuccess === "true") {
         toast.success("Payment successful");
-        setToastShown(true); 
+        setToastShown(true);
         const url = new URL(window.location);
         url.searchParams.delete("isPaymentSuccess");
         window.history.replaceState(null, "", url.toString());
       } else if (isPaymentSuccess === "false") {
         toast.error("Payment failed");
-        setToastShown(true); 
+        setToastShown(true);
         const url = new URL(window.location);
         url.searchParams.delete("isPaymentSuccess");
         window.history.replaceState(null, "", url.toString());
       }
     }
   }, [isPaymentSuccess, toastShown]);
+  const handleApplyCoupon = async (e) => {
+    e.preventDefault();
+    const couponCode = e.target.couponCode.value;
+    setcoupon(couponCode);
+    const { data } = await FetchApi({
+      url: `cart/api/apply-coupon/`,
+      body: {
+        coupon_code: couponCode,
+      },
+      method: "post",
+      isToast: true,
+    });
+    setdiscountAmount(data?.total_discounted_price);
+  };
   return (
     <div className="min-h-screen">
       <NavigationBar cartOpen={setopen} />
@@ -180,7 +205,12 @@ const Page = () => {
               </div>
               <div className="space-y-2 mt-2  font-medium">
                 <p className="">{item?.product?.productName}</p>
-                <p className=" font-semibold">৳{item?.total_price}</p>
+                <p className=" font-semibold">
+                  ৳
+                  {(discountAmount
+                    ? item?.product?.regularPrice
+                    : item?.product?.salePrice) * item?.quantity}
+                </p>
                 <p>Size: {item?.size}</p>
                 <p>Color: {item?.color}</p>
               </div>
@@ -197,31 +227,29 @@ const Page = () => {
               <p>৳ {deliveryCharge}</p>
             </div>
             <div className="font-medium flex justify-between">
-              <p>HOLAGO Club Discount</p>
-              <p>৳ 0</p>
-            </div>
-            <div className="font-medium flex justify-between">
-              <p>VAT</p>
-              <p>৳ 0</p>
+              <p>HOLAGO Coupon Discount</p>
+              <p>৳ {discountAmount}</p>
             </div>
             <div className="font-semibold flex justify-between">
               <p>Total</p>
-              <p>৳ {totalPrice}</p>
+              <p>৳ {totalPrice + discountAmount}</p>
             </div>
           </div>
           <hr className="my-5" />
 
           <div className="flex items-end">
-            <div className="w-full">
+            <form onSubmit={handleApplyCoupon} className="w-full">
               <TextInputWithButton
                 buttonClass="px-5 bg-black text-white"
                 rounded="full"
-                buttonText="Apply"
+                disableBtn={discountAmount ? true : false}
+                buttonText={!discountAmount ? "Apply" : "Applied"}
                 label={"Do you have a promotional code?"}
                 placeholder={"Enter code"}
                 className={"rounded-r-none"}
+                name={"couponCode"}
               />
-            </div>
+            </form>
           </div>
         </div>
       </div>

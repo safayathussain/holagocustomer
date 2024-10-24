@@ -17,6 +17,7 @@ import ProductColor from "@/components/store/product/ProductColor";
 import { useDispatch, useSelector } from "react-redux";
 import { useAuth, useCart } from "@/utils/functions";
 import toast from "react-hot-toast";
+import { setCart } from "@/redux/slices/CartSlice";
 const Page = () => {
   const pagination = {
     clickable: true,
@@ -47,7 +48,8 @@ const Page = () => {
     loadData();
   }, []);
   const handleAddToCart = async () => {
-    if(!auth?.customer?.id) return toast.error("You need to login for add to cart.")
+    // if (!auth?.customer?.id)
+    //   return toast.error("You need to login for add to cart.");
     const productToAdd = {
       product_id: product?.id,
       quantity: qty,
@@ -65,44 +67,61 @@ const Page = () => {
         item.size === productToAdd.size &&
         item.color === productToAdd.color
     );
-
-    if (existingProductIndex !== -1) {
-      // Product exists, create a new object for the existing product and update its quantity
-      const updatedCartItems = [...cartItems];
-      const updatedProduct = {
-        ...updatedCartItems[existingProductIndex],
-        quantity:
-          updatedCartItems[existingProductIndex].quantity +
-          productToAdd.quantity,
-      };
-      updatedCartItems[existingProductIndex] = updatedProduct;
-      // Dispatch the updated cart
-      const data = {
-        product_id: product.id,
-        quantity: qty,
-        size: selectedSize.size,
-        color: selectedColor,
-      };
-      await FetchApi({
-        url: `cart/api/cart_manage/${auth?.customer?.id}/update/${product?.id}/`,
-        method: "post",
-        body: data,
-      });
-      refetchCart();
+    if (auth?.customer?.id) {
+      if (existingProductIndex !== -1) {
+        const updatedCartItems = [...cartItems];
+        const updatedProduct = {
+          ...updatedCartItems[existingProductIndex],
+          quantity:
+            updatedCartItems[existingProductIndex].quantity +
+            productToAdd.quantity,
+        };
+        updatedCartItems[existingProductIndex] = updatedProduct;
+        const data = {
+          product_id: product.id,
+          quantity: qty,
+          size: selectedSize.size,
+          color: selectedColor,
+        };
+        await FetchApi({
+          url: `cart/api/cart_manage/${auth?.customer?.id}/update/${product?.id}/`,
+          method: "post",
+          body: data,
+        });
+        refetchCart();
+      } else {
+        // Product doesn't exist, add it to the cart
+        const data = {
+          product_id: product.id,
+          quantity: qty,
+          size: selectedSize.size,
+          color: selectedColor,
+        };
+        await FetchApi({
+          url: `cart/api/cart_manage/${auth?.customer?.id}/`,
+          method: "post",
+          body: data,
+        });
+        refetchCart();
+      }
     } else {
-      // Product doesn't exist, add it to the cart
-      const data = {
-        product_id: product.id,
-        quantity: qty,
-        size: selectedSize.size,
-        color: selectedColor,
-      };
-      await FetchApi({
-        url: `cart/api/cart_manage/${auth?.customer?.id}/`,
-        method: "post",
-        body: data,
-      });
-      refetchCart();
+      if (existingProductIndex !== -1) {
+        const updatedCartItems = [...cartItems]; // Create a shallow copy of cartItems array
+        updatedCartItems[existingProductIndex] = {
+          ...cartItems[existingProductIndex], // Create a copy of the existing product
+          quantity: cartItems[existingProductIndex].quantity + qty, // Update the qty property
+        };
+        dispatch(setCart(updatedCartItems));
+      } else {
+        const productForSet = {
+          product: product,
+          color: selectedColor,
+          size: selectedSize?.size,
+          quantity: qty,
+          total_price: Number(product?.salePrice) * Number(qty),
+        };
+        dispatch(setCart([...cartItems, productForSet]));
+      }
     }
   };
   const handleAddWishlist = async (ids) => {

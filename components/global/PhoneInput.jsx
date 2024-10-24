@@ -18,12 +18,11 @@ const PhoneInput = ({
   const [countryCode, setCountryCode] = React.useState("+88"); // Default country code (for example, Bangladesh)
   const [phoneNumber, setPhoneNumber] = React.useState(value);
   useEffect(() => {
-    const code = getCountryCode(value);
+    const code = getCountryCode(phoneNumber);
     if (code) {
       setCountryCode(code);
     }
   }, []);
-
   useEffect(() => {
     // Combine country code and phone number and notify the parent component
     onChange(`${countryCode}${phoneNumber?.replace(countryCode, "")}`);

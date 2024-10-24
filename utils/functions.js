@@ -25,6 +25,7 @@ export const refetchAuthState = async (auth) => {
 };
 export const refetchCartState = async (auth) => {
   try {
+    if(!auth?.customer?.id) return 
     const { data } = await FetchApi({
       url: `/cart/api/get_all_carts/${auth?.customer?.id}/`,
     });
@@ -84,7 +85,7 @@ export const logoutUser = () => {
 };
 
 export function getCountryCode(phoneNumber) {
-  if(!phoneNumber) return "Country code not found"
+  if(!phoneNumber) return null
   if (!phoneNumber?.startsWith("+")) {
     return "";
   }
@@ -145,20 +146,10 @@ export const getOrderStatusStyle = (status) => {
 
 export function formatTo12Hour(timestamp) {
   const date = new Date(timestamp);
-  
-  // Extract hours and minutes
   let hours = date.getHours();
   const minutes = date.getMinutes();
-  
-  // Determine AM or PM suffix
   const ampm = hours >= 12 ? 'PM' : 'AM';
-  
-  // Convert to 12-hour format
-  hours = hours % 12 || 12; // Convert 0 to 12 for midnight
-  
-  // Format minutes to always show two digits
+  hours = hours % 12 || 12; 
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-  // Format the date and time
   return `${hours}:${formattedMinutes} ${ampm}, ${date.toLocaleDateString()}`;
 }

@@ -144,8 +144,8 @@ const Page = () => {
                 <p>Subtotal</p>
                 <p className="font-semibold">৳ {subtotalSalePrice}</p>
               </div>
-              <hr className="my-5" />
-              {/* <TextInput label={'Do you have a promotional code?'} placeholder={'Enter code'} className={'rounded-r-none'} /> */}
+              {/* <hr className="my-5" />
+              <TextInput label={'Do you have a promotional code?'} placeholder={'Enter code'} className={'rounded-r-none'} />
               <TextInputWithButton
                 buttonText="Apply"
                 rounded="full"
@@ -153,7 +153,7 @@ const Page = () => {
                 label={"Do you have a promotional code?"}
                 placeholder={"Enter code"}
                 className={"rounded-r-none"}
-              />
+              /> */}
               {/* <hr className="my-5" />
               <div>
                 <div className="flex items-center gap-3 mb-2">
