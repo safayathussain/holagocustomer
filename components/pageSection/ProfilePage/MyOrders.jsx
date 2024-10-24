@@ -65,8 +65,8 @@ const MyOrders = ({ orders }) => {
         ?.filter(
           (item) => item?.status === ordersTypesNavigations?.[ordersType]?.value
         )
-        .map((order) => (
-          <>
+        .map((order, i) => (
+          <div key={i}>
             <div>
               <div className="border border-[#EEEEEE] p-3 rounded-xl mt-4">
                 <div className="flex items-center justify-between">
@@ -124,8 +124,8 @@ const MyOrders = ({ orders }) => {
                 </div>
 
                 <div>
-                  {order?.order_items?.map((item) => (
-                    <div className="flex mt-3 gap-3 border border-[#EEEEEE] rounded-xl">
+                  {order?.order_items?.map((item, i) => (
+                    <div key={i} className="flex mt-3 gap-3 border border-[#EEEEEE] rounded-xl">
                       <div className="w-[150px] object-cover">
                         <img
                           src={ImgUrl + item?.product?.images?.[0]?.image}
@@ -155,7 +155,7 @@ const MyOrders = ({ orders }) => {
                 </div>
               </div>
             </div>
-          </>
+          </div>
         ))}
     </div>
   );
